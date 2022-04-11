@@ -69,6 +69,7 @@ def updatedata(id):
     else:
         return render_template("updatedata.html", article=article)
 
+
 @app.route("/delete/<int:id>", methods=['POST', 'GET'])
 def deletedata(id):
     article = Human.query.get_or_404(id)

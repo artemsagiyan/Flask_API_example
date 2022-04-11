@@ -11,6 +11,7 @@
 
     {% for val in articles %}
     <div class="allert allert-info">
+        <h2>id: {{val.id}}</h2>
         <h2>name: {{val.name}} | last name: {{val.last_name}} | middle name: {{val.middle_name}} | num: {{val.num_of_pasport}} | time: {{val.date.date()}}</h2>
     </div>
     {% endfor %}
