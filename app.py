@@ -47,20 +47,43 @@ def registerdata():
     else:
         return render_template("registerdata.html")
 
-    return render_template("registerdata.html")
-
 
 @app.route("/get/", methods=['POST', 'GET'])
 def getdata():
     return render_template("getdata.html")
 
-@app.route("/update/", methods=['POST', 'GET'])
-def updatedata():
-    return render_template("updatedata.html")
+@app.route("/update/<int:id>", methods=['POST', 'GET'])
+def updatedata(id):
+    article = Human.query.get(id)
+    if request.method == "POST":
+        article.name = request.form.get('name')
+        article.last_name = request.form.get('last_name')
+        article.middle_name = request.form.get('middle_name')
+        article.num_of_pasport = request.form.get('num_of_pasport')
 
-@app.route("/delete/", methods=['POST', 'GET'])
-def deletedata():
-    return render_template("deletedata.html")
+        try:
+            db.session.commit()
+            return redirect('/posts')
+        except:
+            return "Warning: Data haven't been change"
+    else:
+        return render_template("updatedata.html", article=article)
+
+@app.route("/delete/<int:id>", methods=['POST', 'GET'])
+def deletedata(id):
+    article = Human.query.get_or_404(id)
+
+    try:
+        db.session.delete(article)
+        db.session.commit()
+        return redirect('/posts')
+    except:
+        return "Warning!"
+
+@app.route("/posts")
+def posts():
+    articles = Human.query.order_by(Human.last_name).all()
+    return render_template("posts.html", articles=articles)
 
 if __name__ == "__main__":
     app.run(debug=True)
