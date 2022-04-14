@@ -1,16 +1,21 @@
-from flask import Flask, render_template, url_for, redirect
-from wtforms import StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email
+from flask import Flask, render_template, url_for, redirect, request
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileRequired, FileAllowed
+from wtforms import SubmitField
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from datetime import datetime 
-from flask import request
 import json
+import os
+
+UPLOAD_FOLDER = '/home/kmk/Pictures'
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db = SQLAlchemy(app) 
+
 class Human(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), nullable=False)
@@ -22,21 +27,8 @@ class Human(db.Model):
 
     def __repr__(self):
         return 'Article %r' % self.id
-'''
-@app.route('/picture', methods=['GET', 'POST'])
-def picture():
-    return "Photo:"
 
-url = 'http:/127.0.0.1:7000/picture'
-img = 'home/kmk/Pictures/Screenshot from 2022-04-12 12-15-11.png'   
-
-with open(img, 'rb') as f:
-    img_bytes = f.read()
-files = {'photo':('img.png', img_bytes)}
-response = requests.post(url, files=files)
-vec2 = response.json()['vecs']
-'''
-
+#the own page
 @app.route('/', methods=['GET'])
 def index():
     return render_template("index.html")
@@ -63,15 +55,10 @@ def registerdata():
     else:
         return render_template("registerdata.html")
 
-@app.route("/update/<int:id>", methods=['PUT'])
+#update a definite data
+@app.route("/update/<int:id>/", methods=['PUT'])
 def updatedata(id):
     article = Human.query.get_or_404(id)
-
-    print(article)
-
-    print("method:")
-    print(request.method)
-    print(request.form)
 
     if request.method == "PUT":
         
@@ -90,7 +77,8 @@ def updatedata(id):
     else:
         return render_template("updatedata.html", article=article)
 
-@app.route("/delete/<int:id>", methods=['GET'])
+#delete a definite data
+@app.route("/delete/<int:id>/", methods=['DELETE'])
 def deletedata(id):
     article = Human.query.get_or_404(id)
 
@@ -102,7 +90,21 @@ def deletedata(id):
         db.session.rollback()
         return "Warning!"
 
-@app.route("/posts")
+#to add a new picture in way: "UPLOAD_FOLDER"
+@app.route('/image/', methods=['GET', 'POST'])
+def upload_file():
+
+    if request.method == 'POST':
+        if 'file1' not in request.files:
+            return 'there is no file1 in form!'
+        file1 = request.files['file1']
+        path = os.path.join(app.config['UPLOAD_FOLDER'], file1.filename)
+        file1.save(path)
+        return path
+    return render_template("image.html")
+
+#all data
+@app.route("/posts/")
 def posts():
     articles = Human.query.order_by(Human.last_name).all()
     return render_template("posts.html", articles=articles)
