@@ -23,6 +23,7 @@ class Human(db.Model):
     middle_name = db.Column(db.String(20))
 
     num_of_pasport = db.Column(db.String(10))
+    face = db.Column(db.LargeBinary, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -42,8 +43,9 @@ def registerdata():
         last_name = request_data['last_name']
         middle_name = request_data['middle_name']
         num_of_pasport = request_data['num_of_pasport']
+        face = request_data['face']
 
-        person = Human(name=name, last_name=last_name, middle_name=middle_name, num_of_pasport=num_of_pasport)
+        person = Human(name=name, last_name=last_name, middle_name=middle_name, num_of_pasport=num_of_pasport, face=face)
 
         try:
             db.session.add(person)
@@ -67,6 +69,7 @@ def updatedata(id):
         article.last_name = request_data['last_name']
         article.middle_name = request_data['middle_name']
         article.num_of_pasport = request_data['num_of_pasport']
+        article.face = request_data['face']
 
         try:
             db.session.commit()
