@@ -5,12 +5,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from datetime import datetime 
 from flask import request
+import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app) 
-
 class Human(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), nullable=False)
@@ -22,19 +22,34 @@ class Human(db.Model):
 
     def __repr__(self):
         return 'Article %r' % self.id
+'''
+@app.route('/picture', methods=['GET', 'POST'])
+def picture():
+    return "Photo:"
 
+url = 'http:/127.0.0.1:7000/picture'
+img = 'home/kmk/Pictures/Screenshot from 2022-04-12 12-15-11.png'   
 
-@app.route('/', methods=['POST', 'GET'])
+with open(img, 'rb') as f:
+    img_bytes = f.read()
+files = {'photo':('img.png', img_bytes)}
+response = requests.post(url, files=files)
+vec2 = response.json()['vecs']
+'''
+
+@app.route('/', methods=['GET'])
 def index():
     return render_template("index.html")
 
-@app.route("/register/", methods=['POST', 'GET'])
+@app.route("/register/", methods=['GET', 'POST'])
 def registerdata():
-    if request.method == "POST":
-        name = request.form['name']
-        last_name = request.form['last_name']
-        middle_name = request.form['middle_name']
-        num_of_pasport = request.form['num_of_pasport']
+    if request.method == "POST":        
+        
+        request_data = request.get_json(force=True)
+        name = request_data['name']
+        last_name = request_data['last_name']
+        middle_name = request_data['middle_name']
+        num_of_pasport = request_data['num_of_pasport']
 
         person = Human(name=name, last_name=last_name, middle_name=middle_name, num_of_pasport=num_of_pasport)
 
@@ -43,34 +58,39 @@ def registerdata():
             db.session.commit()
             return redirect('/')
         except:
+            db.session.rollback()
             return "Warning: Data haven't been add"
     else:
         return render_template("registerdata.html")
 
-
-@app.route("/get/", methods=['POST', 'GET'])
-def getdata():
-    return render_template("getdata.html")
-
-@app.route("/update/<int:id>", methods=['POST', 'GET'])
+@app.route("/update/<int:id>", methods=['PUT'])
 def updatedata(id):
-    article = Human.query.get(id)
-    if request.method == "POST":
-        article.name = request.form.get('name')
-        article.last_name = request.form.get('last_name')
-        article.middle_name = request.form.get('middle_name')
-        article.num_of_pasport = request.form.get('num_of_pasport')
+    article = Human.query.get_or_404(id)
+
+    print(article)
+
+    print("method:")
+    print(request.method)
+    print(request.form)
+
+    if request.method == "PUT":
+        
+        request_data = request.get_json(force=True)
+        article.name = request_data['name']
+        article.last_name = request_data['last_name']
+        article.middle_name = request_data['middle_name']
+        article.num_of_pasport = request_data['num_of_pasport']
 
         try:
             db.session.commit()
             return redirect('/posts')
         except:
+            db.session.rollback()
             return "Warning: Data haven't been change"
     else:
         return render_template("updatedata.html", article=article)
 
-
-@app.route("/delete/<int:id>", methods=['POST', 'GET'])
+@app.route("/delete/<int:id>", methods=['GET'])
 def deletedata(id):
     article = Human.query.get_or_404(id)
 
@@ -79,6 +99,7 @@ def deletedata(id):
         db.session.commit()
         return redirect('/posts')
     except:
+        db.session.rollback()
         return "Warning!"
 
 @app.route("/posts")
